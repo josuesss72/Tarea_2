@@ -3,45 +3,47 @@ const { check } = require('express-validator');
 const {
   findAllUsers,
   findOneUser,
-  createUser,
   updateUser,
   deleteUser,
+  updatePassword,
 } = require('../controllers/user.controllers');
-const {
-  validUserById,
-  validUserByEmail,
-} = require('../middlewares/users.middlewares');
-const {validateField} = require('../middlewares/validateField.middlewares');
+const { protect, protectAccountOwner } = require('../middlewares/auth.middlewares');
+const { validUserById, validPassword } = require('../middlewares/users.middlewares');
+const { validateField } = require('../middlewares/validateField.middlewares');
 
 const router = Router();
 
 router.get('/', findAllUsers);
 router.get('/:id', validUserById, findOneUser);
 
-router.post(
-  '/',
+// RUTAS PROTEGIDAS
+router.use(protect);
+
+router.patch(
+  '/:id',
   [
     check('name', 'The username is required').not().isEmpty(),
     check('email', 'The email is required').not().isEmpty(),
     check('email', 'The email must meet a specific format').isEmail(),
-    check('password', 'The password is required').not().isEmpty(),
-    check('password', 'Password must have a minimum of 4 characters').isLength({
-      min: 4,
-    }),
     validateField,
   ],
-  validUserByEmail,
-  createUser
+  validUserById,
+  protectAccountOwner,
+  updateUser
 );
 
-router.patch('/:id', [
-  check('name', 'The username is required').not().isEmpty(),
-  check('email', 'The email is required').not().isEmpty(),
-  check('email', 'The email must meet a specific format').isEmail(),
+router.patch('/password/:id', [
+  check('password', 'The password is requered').not().isEmpty(),
+  check('newPassword', 'The new password is requered').not().isEmpty(),
   validateField
-],validUserById, updateUser);
+],
+  validUserById,
+  protectAccountOwner,
+  validPassword,
+  updatePassword
+)
 
-router.delete('/:id', validUserById, deleteUser);
+router.delete('/:id', validUserById, protectAccountOwner, deleteUser);
 
 module.exports = {
   userRouter: router,

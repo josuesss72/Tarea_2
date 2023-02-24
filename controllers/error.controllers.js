@@ -5,6 +5,7 @@ const AppError = require('../utils/appError');
 // ----> HANDLE CUSTOM ERRORS
 const handleCastError22P02 = () =>
   new AppError('Some type of data send does not match was expected', 400);
+const handleJWTError = () => new AppError('Error JWT, the token is incorrect', 400);
 
 //----> RESPUESTAS DE ERRORS
 const sendErrorDev = (err, res) => {
@@ -55,6 +56,7 @@ const globalErrorHandler = (err, req, res, next) => {
 
     // CUSTOM ERRORS
     if (error.parent?.code === '22P02') error = handleCastError22P02();
+    if (error.name === 'JsonWebTokenError') error = handleJWTError()
 
     sendErrorProd(error, res);
   }

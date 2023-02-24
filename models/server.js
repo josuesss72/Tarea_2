@@ -6,6 +6,8 @@ const { repairRouter } = require('../routes/repair.routes');
 const AppError = require('../utils/appError');
 const globalErrorHandler = require('../controllers/error.controllers');
 const initModel = require('./init.models');
+const { authRoutes } = require('../routes/auth.routes');
+const morgan = require('morgan');
 
 class Server {
   constructor() {
@@ -16,6 +18,7 @@ class Server {
     this.paths = {
       repairs: '/api/v1/repairs',
       users: '/api/v1/users',
+      auth: '/api/v1/auth'
     };
 
     //Connect to db
@@ -31,13 +34,22 @@ class Server {
   middlewares() {
     this.app.use(cors());
     this.app.use(express.json());
+
+    // MORGAN: MUESTRA EN CONSOLA LA PETICION
+    if(process.env.NODE_ENV === 'development') {
+      console.log('In Development 🎡')
+      this.app.use(morgan('dev'))
+    }else {
+      console.log('In Production 🎉')
+    }
   }
 
   routes() {
     this.app.use(this.paths.users, userRouter);
     this.app.use(this.paths.repairs, repairRouter);
+    this.app.use(this.paths.auth, authRoutes)
 
-    // ----> HandleError <----
+    // ----> HANDLE ERROR <----
     this.app.all('*', (req, res, next) => {
       return next(
         new AppError(`Cant find ${req.originalUrl} on this server!`, 404)
